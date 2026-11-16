@@ -1,21 +1,23 @@
-const DEFAULT_UPI = "paytm@paytm";
-const DEFAULT_NAME = "Paytm Merchant";
-
 const form = document.getElementById("paymentForm");
+const qrFile = document.getElementById("qrFile");
+const qrEmpty = document.getElementById("qrEmpty");
+const qrPreview = document.getElementById("qrPreview");
+const qrImage = document.getElementById("qrImage");
+const qrChange = document.getElementById("qrChange");
+const qrField = document.getElementById("qrField");
 const mobileInput = document.getElementById("mobile");
 const amountInput = document.getElementById("amount");
-const noteInput = document.getElementById("note");
 const pushBtn = document.getElementById("pushBtn");
 const btnLabel = pushBtn.querySelector(".btn-label");
 const btnSpinner = pushBtn.querySelector(".btn-spinner");
 const toast = document.getElementById("toast");
-const qrImage = document.getElementById("qrImage");
-const upiDisplay = document.getElementById("upiDisplay");
 
+const qrError = document.getElementById("qrError");
 const mobileError = document.getElementById("mobileError");
 const amountError = document.getElementById("amountError");
 
 let toastTimer;
+let qrDataUrl = "";
 
 function isValidMobile(value) {
   return /^[6-9]\d{9}$/.test(value);
@@ -26,37 +28,26 @@ function isValidAmount(value) {
   return Number.isFinite(n) && n >= 1;
 }
 
-function setFieldValidity(input, errorEl, valid) {
-  const field = input.closest(".field");
+function setFieldValidity(el, errorEl, valid) {
+  const field = el.closest(".field");
   field.classList.toggle("invalid", !valid);
   errorEl.hidden = valid;
 }
 
-function buildUpiLink({ upiId, name, amount, note }) {
-  const params = new URLSearchParams({
-    pa: upiId,
-    pn: name,
-    cu: "INR",
-  });
-
-  if (amount) params.set("am", String(amount));
-  if (note) params.set("tn", note);
-
-  return `upi://pay?${params.toString()}`;
+function showQrPreview(dataUrl) {
+  qrDataUrl = dataUrl;
+  qrImage.src = dataUrl;
+  qrEmpty.hidden = true;
+  qrPreview.hidden = false;
+  setFieldValidity(qrField, qrError, true);
 }
 
-function updateQr() {
-  const amount = amountInput.value.trim();
-  const note = noteInput.value.trim();
-  const upiLink = buildUpiLink({
-    upiId: DEFAULT_UPI,
-    name: DEFAULT_NAME,
-    amount: isValidAmount(amount) ? amount : "",
-    note,
-  });
-
-  upiDisplay.textContent = DEFAULT_UPI;
-  qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`;
+function clearQrPreview() {
+  qrDataUrl = "";
+  qrImage.src = "";
+  qrFile.value = "";
+  qrEmpty.hidden = false;
+  qrPreview.hidden = true;
 }
 
 function showToast(message, ok = true) {
@@ -76,15 +67,37 @@ function showToast(message, ok = true) {
 function setLoading(loading) {
   pushBtn.disabled = loading;
   btnSpinner.hidden = !loading;
-  btnLabel.textContent = loading ? "Pushing…" : "Push payment request";
+  btnLabel.textContent = loading ? "Pushing…" : "Push payment details";
 }
 
 function saveLocal(entry) {
-  const key = "paytm_payment_pushes";
+  const key = "paytm_payment_details";
   const existing = JSON.parse(localStorage.getItem(key) || "[]");
   existing.unshift(entry);
   localStorage.setItem(key, JSON.stringify(existing.slice(0, 20)));
 }
+
+qrFile.addEventListener("change", () => {
+  const file = qrFile.files?.[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    clearQrPreview();
+    setFieldValidity(qrField, qrError, false);
+    showToast("Please choose an image file", false);
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => showQrPreview(String(reader.result));
+  reader.readAsDataURL(file);
+});
+
+qrChange.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  qrFile.click();
+});
 
 mobileInput.addEventListener("input", () => {
   mobileInput.value = mobileInput.value.replace(/\D/g, "").slice(0, 10);
@@ -94,53 +107,46 @@ mobileInput.addEventListener("input", () => {
 });
 
 amountInput.addEventListener("input", () => {
-  updateQr();
   if (amountInput.value !== "") {
     setFieldValidity(amountInput, amountError, isValidAmount(amountInput.value));
   }
 });
-
-noteInput.addEventListener("input", updateQr);
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const mobile = mobileInput.value.trim();
   const amount = amountInput.value.trim();
-  const note = noteInput.value.trim();
-
+  const qrOk = Boolean(qrDataUrl);
   const mobileOk = isValidMobile(mobile);
   const amountOk = isValidAmount(amount);
 
+  setFieldValidity(qrField, qrError, qrOk);
   setFieldValidity(mobileInput, mobileError, mobileOk);
   setFieldValidity(amountInput, amountError, amountOk);
 
-  if (!mobileOk || !amountOk) {
-    showToast("Fix the highlighted fields first", false);
+  if (!qrOk || !mobileOk || !amountOk) {
+    showToast("Add QR, amount, and a valid mobile number", false);
     return;
   }
 
   setLoading(true);
-
-  // Simulated push to Paytm / UPI collect request
   await new Promise((resolve) => setTimeout(resolve, 900));
 
   const entry = {
-    mobile: `+91${mobile}`,
+    qrImage: qrDataUrl,
     amount: Number(amount),
-    note: note || null,
-    upi: DEFAULT_UPI,
+    mobile: `+91${mobile}`,
     pushedAt: new Date().toISOString(),
   };
 
   saveLocal(entry);
   setLoading(false);
-  showToast(`Payment request of ₹${amount} pushed to +91 ${mobile}`);
+  showToast(`Details pushed — ₹${amount} for +91 ${mobile}`);
   form.reset();
-  updateQr();
+  clearQrPreview();
+  qrError.hidden = true;
   mobileError.hidden = true;
   amountError.hidden = true;
   document.querySelectorAll(".field.invalid").forEach((el) => el.classList.remove("invalid"));
 });
-
-updateQr();

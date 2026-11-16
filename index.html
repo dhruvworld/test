@@ -23,26 +23,49 @@
       <h1>Paytm</h1>
     </header>
 
-    <p class="subtitle">Add payment details and push a request</p>
-
-    <section class="qr-block" aria-labelledby="qr-heading">
-      <h2 id="qr-heading">Scan QR to pay</h2>
-      <div class="qr-frame">
-        <img
-          id="qrImage"
-          src=""
-          alt="Paytm UPI QR code"
-          width="200"
-          height="200"
-        />
-      </div>
-      <p class="upi-id" id="upiDisplay">paytm@paytm</p>
-    </section>
+    <p class="subtitle">Add your QR, amount, and mobile — then push</p>
 
     <section class="form-block" aria-labelledby="form-heading">
       <h2 id="form-heading">Payment details</h2>
 
       <form id="paymentForm" novalidate>
+        <div class="field" id="qrField">
+          <span>Add QR code</span>
+          <label class="qr-upload" for="qrFile">
+            <input
+              type="file"
+              id="qrFile"
+              name="qrFile"
+              accept="image/*"
+              required
+            />
+            <div class="qr-empty" id="qrEmpty">
+              <span class="qr-plus">+</span>
+              <span>Upload QR image</span>
+              <small>PNG, JPG, or WEBP</small>
+            </div>
+            <div class="qr-preview" id="qrPreview" hidden>
+              <img id="qrImage" alt="Uploaded Paytm QR" />
+              <button type="button" class="qr-change" id="qrChange">Change QR</button>
+            </div>
+          </label>
+          <small class="error" id="qrError" hidden>Please add a QR image</small>
+        </div>
+
+        <label class="field">
+          <span>Amount (₹)</span>
+          <input
+            type="number"
+            id="amount"
+            name="amount"
+            min="1"
+            step="1"
+            placeholder="100"
+            required
+          />
+          <small class="error" id="amountError" hidden>Enter an amount of at least ₹1</small>
+        </label>
+
         <label class="field">
           <span>Mobile number</span>
           <div class="input-row">
@@ -61,33 +84,8 @@
           <small class="error" id="mobileError" hidden>Enter a valid 10-digit mobile number</small>
         </label>
 
-        <label class="field">
-          <span>Amount (₹)</span>
-          <input
-            type="number"
-            id="amount"
-            name="amount"
-            min="1"
-            step="1"
-            placeholder="100"
-            required
-          />
-          <small class="error" id="amountError" hidden>Enter an amount of at least ₹1</small>
-        </label>
-
-        <label class="field">
-          <span>Note <em>(optional)</em></span>
-          <input
-            type="text"
-            id="note"
-            name="note"
-            maxlength="60"
-            placeholder="Payment for order"
-          />
-        </label>
-
         <button type="submit" class="push-btn" id="pushBtn">
-          <span class="btn-label">Push payment request</span>
+          <span class="btn-label">Push payment details</span>
           <span class="btn-spinner" hidden aria-hidden="true"></span>
         </button>
       </form>

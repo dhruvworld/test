@@ -102,7 +102,6 @@ body {
   font-size: 0.98rem;
 }
 
-.qr-block,
 .form-block {
   background: var(--surface);
   backdrop-filter: blur(10px);
@@ -110,14 +109,9 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.25rem 1.25rem 1.4rem;
+  animation: rise 0.55s ease 0.1s both;
 }
 
-.qr-block {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.qr-block h2,
 .form-block h2 {
   margin: 0 0 1rem;
   font-family: "Outfit", sans-serif;
@@ -126,42 +120,90 @@ body {
   color: var(--paytm-deep);
 }
 
-.qr-frame {
-  display: inline-grid;
+.qr-upload {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.qr-upload input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.qr-empty {
+  display: grid;
   place-items: center;
-  padding: 0.85rem;
+  gap: 0.25rem;
+  min-height: 200px;
+  padding: 1.25rem;
+  border: 1.5px dashed var(--line);
+  border-radius: 14px;
+  background: #f7fbfe;
+  color: var(--muted);
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.qr-upload:hover .qr-empty,
+.qr-upload:focus-within .qr-empty {
+  border-color: var(--paytm-blue);
+  background: #eef9ff;
+}
+
+.qr-plus {
+  font-family: "Outfit", sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--paytm-blue);
+}
+
+.qr-empty small {
+  font-size: 0.78rem;
+}
+
+.qr-preview {
+  display: grid;
+  place-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1.5px solid var(--line);
   border-radius: 14px;
   background: #fff;
-  border: 1px solid var(--line);
-  box-shadow: inset 0 0 0 1px rgba(0, 186, 242, 0.08);
-  animation: fadeIn 0.7s ease 0.15s both;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.qr-frame img {
+.qr-preview img {
   display: block;
-  width: 200px;
-  height: 200px;
+  width: min(200px, 100%);
+  height: auto;
+  max-height: 220px;
+  object-fit: contain;
   border-radius: 4px;
 }
 
-.upi-id {
-  margin: 0.85rem 0 0;
-  font-size: 0.92rem;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
+.qr-change {
+  border: 0;
+  background: transparent;
+  color: var(--paytm-blue);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
 }
 
-.form-block {
-  animation: rise 0.55s ease 0.1s both;
+.qr-change:hover {
+  text-decoration: underline;
+}
+
+.field.invalid .qr-empty,
+.field.invalid .qr-preview {
+  border-color: var(--danger);
 }
 
 .field {
@@ -332,8 +374,7 @@ input[type="text"]:focus {
 }
 
 @media (max-width: 420px) {
-  .qr-frame img {
-    width: 168px;
-    height: 168px;
+  .qr-empty {
+    min-height: 168px;
   }
 }
